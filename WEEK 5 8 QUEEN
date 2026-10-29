@@ -1,0 +1,104 @@
+import random
+import math
+
+def calculate_energy(board):
+    """Counts the number of attacking pairs of queens."""
+    conflicts = 0
+    n = len(board)
+    for i in range(n):
+        for j in range(i + 1, n):
+            # Same column or same diagonal
+            if board[i] == board[j] or abs(board[i] - board[j]) == abs(i - j):
+                conflicts += 1
+    return conflicts
+
+def get_random_neighbor(board):
+    """Generates a neighbor by moving one random queen to a new random column."""
+    neighbor = list(board)
+    random_row = random.randint(0, 7)
+    random_col = random.randint(0, 7)
+   
+    # Ensure we actually move the queen to a new column
+    while random_col == board[random_row]:
+        random_col = random.randint(0, 7)
+       
+    neighbor[random_row] = random_col
+    return neighbor
+
+def simulated_annealing():
+    """Finds a solution to the 8-Queens problem using Simulated Annealing."""
+    # 1. Initialize with a random board layout
+    current_board = [random.randint(0, 7) for _ in range(8)]
+    current_energy = calculate_energy(current_board)
+   
+    # Hyperparameters
+    temperature = 100.0
+    cooling_rate = 0.95
+    max_iterations = 10000
+   
+    for iteration in range(max_iterations):
+        # Found a perfect solution
+        if current_energy == 0:
+            return current_board, iteration
+           
+        # 2. Pick a random neighboring state
+        neighbor_board = get_random_neighbor(current_board)
+        neighbor_energy = calculate_energy(neighbor_board)
+       
+        # 3. Calculate difference in energy
+        delta_energy = neighbor_energy - current_energy
+       
+        # 4. Accept or reject the neighbor
+        if delta_energy < 0:
+            # Better state -> always accept
+            current_board = neighbor_board
+            current_energy = neighbor_energy
+        else:
+            # Worse state -> accept with a probability based on current temperature
+            acceptance_probability = math.exp(-delta_energy / temperature)
+            if random.random() < acceptance_probability:
+                current_board = neighbor_board
+                current_energy = neighbor_energy
+               
+        # 5. Cool down
+        temperature *= cooling_rate
+        if temperature < 0.0001:
+            break
+           
+    return current_board, iteration
+
+def print_board(board):
+    """Prints a visual text grid of the chessboard."""
+    for row in range(8):
+        line = ""
+        for col in range(8):
+            if board[row] == col:
+                line += " Q "
+            else:
+                line += " . "
+        print(line)
+
+# --- Execution ---
+solution, iterations = simulated_annealing()
+final_conflicts = calculate_energy(solution)
+
+print(f"Final Board Array: {solution}")
+print(f"Remaining Conflicts: {final_conflicts}")
+print(f"Iterations Taken: {iterations}\n")
+print("Visualized Chessboard Layout:")
+print_board(solution)
+
+
+Final Board Array: [5, 2, 0, 7, 3, 1, 6, 4]
+Remaining Conflicts: 0
+Iterations Taken: 173
+
+Visualized Chessboard Layout:
+ .  .  .  .  .  Q  .  . 
+ .  .  Q  .  .  .  .  . 
+ Q  .  .  .  .  .  .  . 
+ .  .  .  .  .  .  .  Q 
+ .  .  .  Q  .  .  .  . 
+ .  Q  .  .  .  .  .  . 
+ .  .  .  .  .  .  Q  . 
+ .  .  .  .  Q  .  .  . 
